@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Background Removal & Convert</title>
+</head>
+<body>
+  <h1>Background Removal + Format Conversion</h1>
+
+  <input type="file" id="fileInput" accept="image/*" />
+  
+  <select id="formatSelect">
+    <option value="png">PNG (transparent)</option>
+    <option value="jpg">JPEG</option>
+    <option value="webp">WebP</option>
+  </select>
+
+  <button id="convertBtn">Remove Background + Convert</button>
+
+  <p id="status"></p>
+
+  <a id="downloadLink" style="display:none;" href="#" download="">Download Result</a>
+
+  <script src="script.js"></script>
+</body>
+</html>
