@@ -1,0 +1,10 @@
+{
+  "name": "background-remove-convert",
+  "version": "1.0.0",
+  "main": "api/convert.js",
+  "license": "MIT",
+  "dependencies": {
+    "cloudconvert": "^2.0.0",
+    "node-fetch": "^2.6.1"
+  }
+}
