@@ -2,24 +2,43 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Background Removal & Convert</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Background Removal + Convert</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 30px;
+      max-width: 600px;
+    }
+    #status {
+      margin-top: 20px;
+      font-weight: bold;
+    }
+    #downloadLink {
+      display: none;
+      margin-top: 15px;
+      font-size: 18px;
+    }
+  </style>
 </head>
 <body>
   <h1>Background Removal + Format Conversion</h1>
 
-  <input type="file" id="fileInput" accept="image/*" />
-  
+  <label for="fileInput">Choose an image file:</label><br />
+  <input type="file" id="fileInput" accept="image/*" /><br /><br />
+
+  <label for="formatSelect">Select output format:</label><br />
   <select id="formatSelect">
     <option value="png">PNG (transparent)</option>
     <option value="jpg">JPEG</option>
     <option value="webp">WebP</option>
-  </select>
+  </select><br /><br />
 
   <button id="convertBtn">Remove Background + Convert</button>
 
   <p id="status"></p>
 
-  <a id="downloadLink" style="display:none;" href="#" download="">Download Result</a>
+  <a id="downloadLink" href="#" download="">Download your converted image</a>
 
   <script src="script.js"></script>
 </body>
