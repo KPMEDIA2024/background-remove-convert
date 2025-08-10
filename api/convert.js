@@ -1,81 +1,43 @@
-import fetch from 'node-fetch';
-import CloudConvert from 'cloudconvert';
-import 'dotenv/config';
+const express = require('express');
+const formidable = require('formidable');
+const sharp = require('sharp');
+const fs = require('fs');
+const path = require('path');
 
-const cloudConvert = new CloudConvert(process.env.CLOUDCONVERT_API_KEY);
+const app = express();
+const port = process.env.PORT || 3000;
 
-export default async function handler(req, res) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
+app.post('/convert', (req, res) => {
+  const form = formidable({ multiples: false });
 
-  try {
-    const { imageBase64, outputFormat } = req.body;
-    if (!imageBase64 || !outputFormat) {
-      return res.status(400).json({ error: 'Missing image or format' });
+  form.parse(req, (err, fields, files) => {
+    if (err) {
+      console.error('Error parsing form:', err);
+      return res.status(500).send('Form parsing error');
     }
 
-    const removeBgResponse = await fetch('https://api.remove.bg/v1.0/removebg', {
-      method: 'POST',
-      headers: {
-        'X-Api-Key': process.env.REMOVE_BG_API_KEY,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        image_file_b64: imageBase64,
-        size: 'auto',
-        format: 'png',
-      }),
-    });
-
-    if (!removeBgResponse.ok) {
-      const error = await removeBgResponse.text();
-      return res.status(500).json({ error: 'remove.bg error: ' + error });
+    const file = files.image;
+    if (!file) {
+      return res.status(400).send('No image uploaded');
     }
 
-    const removeBgBuffer = await removeBgResponse.buffer();
+    const outputPath = path.join(__dirname, 'output.png');
 
-    if (outputFormat.toLowerCase() === 'png') {
-      res.setHeader('Content-Type', 'image/png');
-      return res.status(200).send(removeBgBuffer);
-    }
+    sharp(file.filepath)
+      .png()
+      .toFile(outputPath)
+      .then(() => {
+        res.sendFile(outputPath, () => {
+          fs.unlinkSync(outputPath); // cleanup temp file
+        });
+      })
+      .catch(error => {
+        console.error('Sharp error:', error);
+        res.status(500).send('Image processing error');
+      });
+  });
+});
 
-    const job = await cloudConvert.jobs.create({
-      tasks: {
-        'import-my-file': {
-          operation: 'import/upload',
-        },
-        'convert-my-file': {
-          operation: 'convert',
-          input: 'import-my-file',
-          output_format: outputFormat.toLowerCase(),
-        },
-        'export-my-file': {
-          operation: 'export/url',
-          input: 'convert-my-file',
-        },
-      },
-    });
-
-    const uploadTask = job.tasks.find(task => task.name === 'import-my-file');
-
-    await cloudConvert.tasks.upload(uploadTask, removeBgBuffer, 'image.png');
-
-    const completedJob = await cloudConvert.jobs.wait(job.id);
-
-    const exportTask = completedJob.tasks.find(task => task.operation === 'export/url');
-    const fileUrl = exportTask.result.files[0].url;
-
-    const convertedResponse = await fetch(fileUrl);
-    if (!convertedResponse.ok) {
-      return res.status(500).json({ error: 'CloudConvert fetch error' });
-    }
-    const convertedBuffer = await convertedResponse.buffer();
-
-    res.setHeader('Content-Type', `image/${outputFormat.toLowerCase()}`);
-    res.status(200).send(convertedBuffer);
-
-  } catch (error) {
-    res.status(500).json({ error: error.message || 'Internal server error' });
-  }
-}
+app.listen(port, () => {
+  console.log(`Server running on port ${port}`);
+});
